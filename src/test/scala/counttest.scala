@@ -59,7 +59,7 @@ class counttest extends WordSpec with Matchers with BeforeAndAfterEach{
 			}
 
 			"100100000 should equal one billion one million" in {
-				CountCharacters.toWords(100100000) should equal("one billion")
+				CountCharacters.toWords(101000000) should equal("one billion one million")
 			}
 
 

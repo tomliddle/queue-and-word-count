@@ -19,16 +19,27 @@ object CountCharacters {
 
 		val digit = "" :: "one" :: "two" :: "three" :: "four" :: "five" :: "six" :: "seven" :: "eight" :: "nine" :: "ten" :: "eleven" :: "twelve" :: "thirteen" :: "fourteen" :: "fifteen" :: "sixteen" :: "seventeen" :: "eighteen" :: "nineteen" :: Nil
 		val tens = "" :: "ten" :: "twenty" :: "thirty" :: "fourty" :: "fifty" :: "sixty" :: "seventy" :: "eighty" :: "ninety" :: Nil
-		val other = "hundred" :: "thousand" :: "hundred thousand" :: "million" :: "hundred million" :: "billion" :: Nil
+		val other = "hundred" :: "thousand" :: "thousand" :: "hundred thousand" :: "million" :: "hundred million" :: "billion" :: Nil
 		val str = i.toString
 
+		def getTens(idxFromRight: Int): String = {
+			val idx = str(str.length - 1 - idxFromRight).asDigit
+			tens(idx) + (if (idx > 0) " " else "")
+		}
+
+		def getDigit(idx: Int): String = {
+			digit(idx) + (if (idx == 0) " " else "")
+		}
+
 		def getFrom(idxFromRight: Int): String = {
-			if (idxFromRight >= str.size) ""
+			if (idxFromRight >= str.length) ""
 			else idxFromRight match {
-				case 1 => tens(str(str.length - 1 - idxFromRight).asDigit) + " " + digit(str.last.asDigit) + " "
-				case 4 => tens(str(str.length - 1 - idxFromRight).asDigit) +  " "
-				case 5 => digit(str(str.length - 1 - idxFromRight).asDigit)
-				case _ => digit(str(str.length - 1 - idxFromRight).asDigit) + " " + other(idxFromRight - 2) + " "
+				case 1 => getTens(idxFromRight) + getDigit(str.last.asDigit)
+				case 4 => getTens(idxFromRight)
+				case _ =>
+					val currDigit = digit(str(str.length - 1 - idxFromRight).asDigit)
+					val placeValue = if (currDigit != "" || str.length == idxFromRight+1) other(idxFromRight - 2)+ " " else ""
+					currDigit + " " + placeValue
 			}
 		}
 
@@ -36,8 +47,8 @@ object CountCharacters {
 		else if (i < 20) digit(i)
 		else {
 			(1 to str.length-1).foldRight("") {
-				(current, output) => output + getFrom(current)
-			}.dropRight(1)
+				(placeValue, output) => output + getFrom(placeValue)
+			}
 		}
 	}
 
