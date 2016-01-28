@@ -15,7 +15,30 @@ object CountCharacters {
 		 toWords(999) = "nine hundred ninety nine"
 	*/
 	def toWords(i: Int): String = {
-		""
+		assert(i >= 0)
+
+		val digit = "" :: "one" :: "two" :: "three" :: "four" :: "five" :: "six" :: "seven" :: "eight" :: "nine" :: "ten" :: "eleven" :: "twelve" :: "thirteen" :: "fourteen" :: "fifteen" :: "sixteen" :: "seventeen" :: "eighteen" :: "nineteen" :: Nil
+		val tens = "" :: "ten" :: "twenty" :: "thirty" :: "fourty" :: "fifty" :: "sixty" :: "seventy" :: "eighty" :: "ninety" :: Nil
+		val other = "hundred" :: "thousand" :: "hundred thousand" :: "million" :: "hundred million" :: "billion" :: Nil
+		val str = i.toString
+
+		def getFrom(idxFromRight: Int): String = {
+			if (idxFromRight >= str.size) ""
+			else idxFromRight match {
+				case 1 => tens(str(str.length - 1 - idxFromRight).asDigit) + " " + digit(str.last.asDigit) + " "
+				case 4 => tens(str(str.length - 1 - idxFromRight).asDigit) +  " "
+				case 5 => digit(str(str.length - 1 - idxFromRight).asDigit)
+				case _ => digit(str(str.length - 1 - idxFromRight).asDigit) + " " + other(idxFromRight - 2) + " "
+			}
+		}
+
+		if (i == 0) "zero"
+		else if (i < 20) digit(i)
+		else {
+			(1 to str.length-1).foldRight("") {
+				(current, output) => output + getFrom(current)
+			}.dropRight(1)
+		}
 	}
 
 

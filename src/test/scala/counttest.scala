@@ -43,7 +43,7 @@ class counttest extends WordSpec with Matchers with BeforeAndAfterEach{
 			}
 
 			"100050 should equal one hundred thousand and fifty" in {
-				CountCharacters.toWords(100050) should equal("one hundred thousand and fifty")
+				CountCharacters.toWords(100050) should equal("one hundred thousand fifty")
 			}
 
 			"1700000 should equal one million seven hundred thousand" in {
