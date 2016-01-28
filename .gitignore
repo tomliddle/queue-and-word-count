@@ -1,0 +1,13 @@
+.idea
+.idea_modules
+*.swp
+run
+LOGS
+lib
+target
+dist
+src/main/resources/dev.conf
+src/main/managed
+config/*.db
+config/mkv_dev.jinit
+
