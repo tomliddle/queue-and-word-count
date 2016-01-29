@@ -42,6 +42,10 @@ class counttest extends WordSpec with Matchers with BeforeAndAfterEach{
 				CountCharacters.toWords(100000) should equal("one hundred thousand")
 			}
 
+			"111111 should equal one hundred eleven thousand one hundred eleven" in {
+				CountCharacters.toWords(111111) should equal("one hundred eleven thousand one hundred eleven")
+			}
+
 			"100050 should equal one hundred thousand and fifty" in {
 				CountCharacters.toWords(100050) should equal("one hundred thousand fifty")
 			}
@@ -51,19 +55,16 @@ class counttest extends WordSpec with Matchers with BeforeAndAfterEach{
 			}
 
 			"10000000 should equal one hundred million" in {
-				CountCharacters.toWords(10000000) should equal("one hundred million")
+				CountCharacters.toWords(100000000) should equal("one hundred million")
 			}
 
 			"100000000 should equal one billion" in {
-				CountCharacters.toWords(100000000) should equal("one billion")
+				CountCharacters.toWords(1000000000) should equal("one billion")
 			}
 
 			"100100000 should equal one billion one million" in {
-				CountCharacters.toWords(101000000) should equal("one billion one million")
+				CountCharacters.toWords(1001000000) should equal("one billion one million")
 			}
-
-
-
 		}
 	}
 }

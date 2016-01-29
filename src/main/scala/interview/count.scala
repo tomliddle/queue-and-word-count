@@ -1,6 +1,15 @@
 package interview
 
 object CountCharacters {
+
+	// All the text in sequences
+	private val digitStr = Seq("", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen")
+	private val tenStr = Seq("", "ten", "twenty", "thirty", "fourty", "fifty", "sixty", "seventy", "eighty", "ninety")
+	private val other = Seq("hundred", "", "thousand", "hundred thousand", "million", "hundred million", "billion")
+	private val digitStrLen = digitStr.map(_.length)
+	private val tenStrLen = digitStr.map(_.length)
+	private val otherLen = digitStr.map(_.length)
+
 	/*
 		We want to produce a function that counts the number of chars in an English language spelling of a number.
 		The top-level function countCharsInWords is provided for you.
@@ -17,38 +26,50 @@ object CountCharacters {
 	def toWords(i: Int): String = {
 		assert(i >= 0)
 
-		val digit = "" :: "one" :: "two" :: "three" :: "four" :: "five" :: "six" :: "seven" :: "eight" :: "nine" :: "ten" :: "eleven" :: "twelve" :: "thirteen" :: "fourteen" :: "fifteen" :: "sixteen" :: "seventeen" :: "eighteen" :: "nineteen" :: Nil
-		val tens = "" :: "ten" :: "twenty" :: "thirty" :: "fourty" :: "fifty" :: "sixty" :: "seventy" :: "eighty" :: "ninety" :: Nil
-		val other = "hundred" :: "thousand" :: "thousand" :: "hundred thousand" :: "million" :: "hundred million" :: "billion" :: Nil
-		val str = i.toString
+		// Split out each of the values. We are currently only looking at up to 999bn but it could be expanded
+		val fillRightStr = f"$i%012d"
+		val len = fillRightStr.length
+		val tens = fillRightStr.takeRight(2) // 2 chars
+		val hundreds = fillRightStr.charAt(len -3) // 1 char
+		val thousands = fillRightStr.substring(len -6, len -3) // 3 chars
+		val millions = fillRightStr.substring(len -9, len -6) // 3 chars
+		val billions = fillRightStr.substring(len - 12, len - 9) // 3 chars
 
-		def getTens(idxFromRight: Int): String = {
-			val idx = str(str.length - 1 - idxFromRight).asDigit
-			tens(idx) + (if (idx > 0) " " else "")
+
+		def getDoubleDigitVals(str: String): Option[String] = {
+			def precedingSpace(str: String): String = if (str.length == 0) "" else  " " + str
+
+			if (str.toInt == 0) None
+			else if (str(0) == '0') Some(digitStr(str(1).asDigit))
+			else if (str(0) == '1') Some(digitStr(str.toInt))
+			else Some(tenStr(str(0).asDigit) + precedingSpace(digitStr(str(1).asDigit)))
 		}
 
-		def getDigit(idx: Int): String = {
-			digit(idx) + (if (idx == 0) " " else "")
+		/**
+			* Gets the hundred values - special case as the syntax doesn't allow for seventeen hundred etc.
+			*/
+		def getHundredVals(char: Char): Option[String] = {
+			if (char == '0') None
+			else Some(digitStr(char.asDigit) + " hundred")
 		}
 
-		def getFrom(idxFromRight: Int): String = {
-			if (idxFromRight >= str.length) ""
-			else idxFromRight match {
-				case 1 => getTens(idxFromRight) + getDigit(str.last.asDigit)
-				case 4 => getTens(idxFromRight)
-				case _ =>
-					val currDigit = digit(str(str.length - 1 - idxFromRight).asDigit)
-					val placeValue = if (currDigit != "" || str.length == idxFromRight+1) other(idxFromRight - 2)+ " " else ""
-					currDigit + " " + placeValue
-			}
+		/**
+			* Gets the short scale number naming e.g. five hundred (thousand|million|billion)
+			* @param str must be exactly 3 chars
+			* @param qualifier thousand | million | billion
+			* @return a list of options of strings. None will be returned for values which we don't want displayed
+			*/
+		def getShortScale(str: String, qualifier: String): List[Option[String]] = {
+			val hundreds = getHundredVals(str.head)
+			val teens = getDoubleDigitVals(str.tail)
+			hundreds :: teens :: (if (hundreds.isDefined || teens.isDefined) Some(qualifier) :: Nil else Nil)
 		}
 
+		// Special case for zero. This simplifies the algorithm for using the Seq indexes so as not to print out a number of "zero"'s
 		if (i == 0) "zero"
-		else if (i < 20) digit(i)
 		else {
-			(1 to str.length-1).foldRight("") {
-				(placeValue, output) => output + getFrom(placeValue)
-			}
+			val list = getShortScale(billions, "billion") ::: getShortScale(millions, "million") ::: getShortScale(thousands, "thousand") ::: List(getHundredVals(hundreds), getDoubleDigitVals(tens))
+			list.flatten.mkString(" ")
 		}
 	}
 
@@ -68,5 +89,6 @@ object CountCharacters {
 	*/
 	def countCharsInWordsOptimised(i: Int): Int = {
 		1
+
 	}
 }
