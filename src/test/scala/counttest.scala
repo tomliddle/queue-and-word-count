@@ -4,7 +4,7 @@ import org.scalatest.Matchers
 import org.scalatest.WordSpec
 
 
-class counttest extends WordSpec with Matchers with BeforeAndAfterEach{
+class counttest extends WordSpec with Matchers with BeforeAndAfterEach {
 
 	"count" when {
 
