@@ -3,13 +3,12 @@ package interview
 object CountCharacters {
 
 	// All the text in sequences. The first element (zero) is left blank as we don't print these except for the value 0
-	private val digitStr =
+	private val digitSeq =
 		Map (	"digit" -> Seq("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"),
 					"tens" -> Seq("", "ten", "twenty", "thirty", "fourty", "fifty", "sixty", "seventy", "eighty", "ninety"),
 					"qualifier" -> Seq("hundred", "thousand", "million", "billion"))
-
-	// Calculate each individual string length in the same format as digitStr
-	private val digitSeq = digitStr.map{x => x._1 -> x._2.map(word => (word, word.length))}
+				// Calculate each individual string length and insert as tuple
+				.map{x => x._1 -> x._2.map(word => (word, word.length))}
 
 	/**
 		* Gets text values from zero to ninety nine
@@ -17,9 +16,7 @@ object CountCharacters {
 		* @param d2 0 to 9
 		*/
 	private def getDoubleDigitVals(d1: Int, d2: Int): List[(String, Int)] = {
-		def precedingSpace(str: String): String = if (str.length == 0) "" else  " " + str
-
-		// For a zero we don't return any text
+		// For a zero we don't return any text (for 100 we dont want one hundred zero zero)
 		if (d1 + d2 == 0) List()
 		// For a single digit number we return the text
 		else if (d1 == 0) List(digitSeq("digit")(d2))
@@ -68,7 +65,6 @@ object CountCharacters {
 		if (i == 0) List(digitSeq("digit").head)
 		else {
 			// We are currently only looking at up to 999bn but it could be expanded
-			// Add the lists together. This way we don't need any complicated rules regarding spaces.
 			(getShortScale(s(11), s(10), s(9), digitSeq("qualifier")(3))
 					++ getShortScale(s(8), s(7), s(6), digitSeq("qualifier")(2))
 					++ getShortScale(s(5), s(4), s(3), digitSeq("qualifier")(1))
@@ -92,6 +88,7 @@ object CountCharacters {
 	*/
 	def toWords(i: Int): String = {
 		getToWords(i).foldLeft(new StringBuilder) {
+			// Get the tuple and append the first value which is the required word with spaces.
 			(acc, curr) => acc.append(curr._1).append(" ")
 		}.toString.dropRight(1)
 	}
@@ -111,6 +108,7 @@ object CountCharacters {
 		Try to make this implementation as efficient as you can
 	*/
 	def countCharsInWordsOptimised(i: Int): Int = {
+		// Get the tuples and sum the second value (i.e. the length of string)
 		getToWords(i).foldLeft(0) {
 			(acc, curr) => acc + curr._2
 		}
