@@ -3,11 +3,79 @@ package interview
 object CountCharacters {
 
 	// All the text in sequences. The first element (zero) is left blank as we don't print these except for the value 0
-	private val digitStr = Seq("", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen")
-	private val tenStr = Seq("", "ten", "twenty", "thirty", "fourty", "fifty", "sixty", "seventy", "eighty", "ninety")
+	private val digitStr =
+		Map (	"digit" -> Seq("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"),
+					"tens" -> Seq("", "ten", "twenty", "thirty", "fourty", "fifty", "sixty", "seventy", "eighty", "ninety"),
+					"qualifier" -> Seq("hundred", "thousand", "million", "billion"))
 
-	private val digitStrLen = digitStr.map(_.length)
-	private val tenStrLen = tenStr.map(_.length)
+	// Calculate each individual string length in the same format as digitStr
+	private val digitSeq = digitStr.map{x => x._1 -> x._2.map(word => (word, word.length))}
+
+	/**
+		* Gets text values from zero to ninety nine
+		* @param d1 0 to 9
+		* @param d2 0 to 9
+		*/
+	private def getDoubleDigitVals(d1: Int, d2: Int): List[(String, Int)] = {
+		def precedingSpace(str: String): String = if (str.length == 0) "" else  " " + str
+
+		// For a zero we don't return any text
+		if (d1 + d2 == 0) List()
+		// For a single digit number we return the text
+		else if (d1 == 0) List(digitSeq("digit")(d2))
+		// Special case for a double digit number in the teens, we return numbers like sixteen etc
+		else if (d1 == 1) List(digitSeq("digit")(d1 * 10 + d2))
+		// Otherwise it is a number like seventy seven, which we join together as text from the relevant Seq
+		else if (d2 == 0) List(digitSeq("tens")(d1))
+		else List(digitSeq("tens")(d1), digitSeq("digit")(d2))
+	}
+
+	/**
+		* Gets the hundred values - special case as the expected syntax doesn't allow for seventeen hundred etc.
+		* @param d1 0 to 9
+		*/
+	private def getHundredVals(d1: Int): List[(String, Int)] = {
+		if (d1 == 0) List()
+		else List(digitSeq("digit")(d1), digitSeq("qualifier").head)
+	}
+
+	/**
+		* Gets the short scale number naming e.g. five hundred (thousand|million|billion)
+		* @param d1 digit 1,
+		* @param d2 digit 2
+		* @param d3 digit 3
+		* @param qualifier thousand | million | billion
+		* @return a list of options of strings. None will be returned for values which we don't want displayed
+		*/
+	private def getShortScale(d1: Int, d2: Int, d3: Int, qualifier: (String, Int)): List[(String, Int)] = {
+		val hundreds = getHundredVals(d1)
+		val dd = getDoubleDigitVals(d2, d3)
+		// Here we add the three chars and if not zero's add the qualifier.
+		// E.g. 700,000 would be seven hundred (with the qualifier) thousand
+		// But 000,000 would not need the thousand qualifier
+		hundreds ::: dd ::: (if (hundreds.nonEmpty || dd.nonEmpty) qualifier :: Nil else Nil)
+	}
+
+	private def getToWords(i: Int): List[(String, Int)] = {
+		// We currently don't deal with negative numbers
+		assert(i >= 0)
+
+		// Pad the string to the left so we don't have to worry about string length.
+		val str = f"$i%012d"
+		def s(idxFromRight: Int): Int = str.charAt(str.length - 1 - idxFromRight).asDigit
+
+		// Special case for zero. This simplifies the algorithm for using the Seq indexes so as not to print out a number of "zero"'s
+		if (i == 0) List(digitSeq("digit").head)
+		else {
+			// We are currently only looking at up to 999bn but it could be expanded
+			// Add the lists together. This way we don't need any complicated rules regarding spaces.
+			(getShortScale(s(11), s(10), s(9), digitSeq("qualifier")(3))
+					++ getShortScale(s(8), s(7), s(6), digitSeq("qualifier")(2))
+					++ getShortScale(s(5), s(4), s(3), digitSeq("qualifier")(1))
+					++ getHundredVals(s(2))
+					++ getDoubleDigitVals(s(1), s(0)))
+		}
+	}
 
 	/*
 		We want to produce a function that counts the number of chars in an English language spelling of a number.
@@ -23,68 +91,9 @@ object CountCharacters {
 		 toWords(999) = "nine hundred ninety nine"
 	*/
 	def toWords(i: Int): String = {
-		// We currently don't deal with negative numbers
-		assert(i >= 0)
-
-		// Split out each of the values. We are currently only looking at up to 999bn but it could be expanded
-		val str = f"$i%012d"
-		val len = str.length
-		val tens = str.takeRight(2) // 2 chars
-		val hundreds = str.charAt(len -3) // 1 char
-		val thousands = str.substring(len -6, len -3) // 3 chars
-		val millions = str.substring(len -9, len -6) // 3 chars
-		val billions = str.substring(len - 12, len - 9) // 3 chars
-
-
-		/**
-			* Gets text values from zero to ninety nine
-			* @param str 00 to 99
-			*/
-		def getDoubleDigitVals(str: String): Option[String] = {
-			def precedingSpace(str: String): String = if (str.length == 0) "" else  " " + str
-
-			// For a zero we don't return any text
-			if (str.toInt == 0) None
-			// For a single digit number we return the text
-			else if (str(0) == '0') Some(digitStr(str(1).asDigit))
-			// Special case for a double digit number in the teens, we return numbers like sixteen etc
-			else if (str(0) == '1') Some(digitStr(str.toInt))
-			// Otherwise it is a number like seventy seven, which we join together as text from the relevant Seq
-			else Some(tenStr(str(0).asDigit) + precedingSpace(digitStr(str(1).asDigit)))
-		}
-
-		/**
-			* Gets the hundred values - special case as the expected syntax doesn't allow for seventeen hundred etc.
-			* @param char 0 to 9
-			*/
-		def getHundredVals(char: Char): Option[String] = {
-			if (char == '0') None
-			else Some(digitStr(char.asDigit) + " hundred")
-		}
-
-		/**
-			* Gets the short scale number naming e.g. five hundred (thousand|million|billion)
-			* @param str must be exactly 3 chars
-			* @param qualifier thousand | million | billion
-			* @return a list of options of strings. None will be returned for values which we don't want displayed
-			*/
-		def getShortScale(str: String, qualifier: String): List[Option[String]] = {
-			val hundreds = getHundredVals(str.head)
-			val dd = getDoubleDigitVals(str.tail)
-			// Here we add the three chars and if not zero's add the qualifier.
-			// E.g. 700,000 would be seven hundred (with the qualifier) thousand
-			// But 000,000 would not need the thousand qualifier
-			hundreds :: dd :: (if (hundreds.isDefined || dd.isDefined) Some(qualifier) :: Nil else Nil)
-		}
-
-		// Special case for zero. This simplifies the algorithm for using the Seq indexes so as not to print out a number of "zero"'s
-		if (i == 0) "zero"
-		else {
-			// Add the lists together. This way we don't need any complicated rules regarding spaces.
-			val list = getShortScale(billions, "billion") ::: getShortScale(millions, "million") ::: getShortScale(thousands, "thousand") ::: List(getHundredVals(hundreds), getDoubleDigitVals(tens))
-			// We just flatten the list to remove empty options and add a space in between
-			list.flatten.mkString(" ")
-		}
+		getToWords(i).foldLeft(new StringBuilder) {
+			(acc, curr) => acc.append(curr._1).append(" ")
+		}.toString.dropRight(1)
 	}
 
 
@@ -102,7 +111,8 @@ object CountCharacters {
 		Try to make this implementation as efficient as you can
 	*/
 	def countCharsInWordsOptimised(i: Int): Int = {
-		1
-
+		getToWords(i).foldLeft(0) {
+			(acc, curr) => acc + curr._2
+		}
 	}
 }
